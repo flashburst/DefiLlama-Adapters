@@ -17,6 +17,15 @@ const fromBlocks = {
   bsc: 29123165,
 };
 
+const bentoBoxAddress = {
+  arbitrum: "0x74c764D41B77DBbb4fe771daB1939B00b146894A"
+}
+
+const getBondPrice = async () => {
+  const { reserve0, reserve1 } = await getReserves(tokenAddresses.bondPairEth);
+  return new BigNumber(reserve1).div(new BigNumber(reserve0));
+}
+
 async function tvl(_, block, _1, { api, chain }) {
   const logs = await getLogs({
     api,
@@ -33,7 +42,21 @@ async function tvl(_, block, _1, { api, chain }) {
   })
   const toa = tokens.map((token, i) => ([token, vaults[i]]))
 
-  return sumTokens2({ api, tokensAndOwners: toa, chain })
+  console.log(toa);
+
+  const toa2 = []
+  if(chain === 'arbitrum'){
+    // usdc, treasury
+    toa2.push(['0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', '0x808Ca06eEC8d8645386Be4293a7f4428D4994f5B'])
+    // npm, treasury
+    toa2.push(['0x57f12FE6A4e5fe819eec699FAdf9Db2D06606bB4', '0x808Ca06eEC8d8645386Be4293a7f4428D4994f5B'])
+  }
+
+  const vaultTvl = await sumTokens2({ api, tokensAndOwners: toa2, chain, resolveLP: true })
+
+  console.log(vaultTvl);
+
+  return vaultTvl
 }
 
 module.exports = {
